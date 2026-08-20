@@ -368,18 +368,23 @@
 
     let pointerStart = null;
     elements.pages.quiz.addEventListener('pointerdown', (event) => {
-        pointerStart = { x: event.screenX, y: event.screenY };
+        pointerStart = { x: event.clientX, y: event.clientY, time: Date.now() };
         effects.unlockAudio();
     });
     elements.pages.quiz.addEventListener('pointerup', (event) => {
         if (!pointerStart || modalOpen) return;
-        const diffX = event.screenX - pointerStart.x;
-        const diffY = event.screenY - pointerStart.y;
+        const diffX = event.clientX - pointerStart.x;
+        const diffY = event.clientY - pointerStart.y;
+        const elapsed = Date.now() - pointerStart.time;
         pointerStart = null;
-        if (Math.abs(diffX) < 60 || Math.abs(diffY) > 90) return;
+        // 允许更宽松的判断：水平移动>50px 且 水平位移大于垂直位移，且在1秒内完成
+        if (Math.abs(diffX) < 50 || Math.abs(diffY) > Math.abs(diffX) || elapsed > 1000) return;
         engine.dispatch({ type: diffX < 0 ? 'SWIPE_LEFT' : 'SWIPE_RIGHT' });
     });
     elements.pages.quiz.addEventListener('pointercancel', () => { pointerStart = null; });
+
+    // 阻止默认拖拽行为（防止PC端拖拽文字）
+    elements.pages.quiz.addEventListener('dragstart', (e) => e.preventDefault());
 
     document.addEventListener('keydown', (event) => {
         if (modalOpen) {

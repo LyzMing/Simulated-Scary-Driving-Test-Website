@@ -70,6 +70,18 @@ button:focus-visible {
     overflow: auto;
 }
 
+/* 禁止滑动区域的文字选择和拖拽，防止干扰手势操作 */
+#quiz-page {
+    -webkit-user-select: none;
+    user-select: none;
+    touch-action: pan-y;
+}
+
+#quiz-page * {
+    -webkit-user-select: none;
+    user-select: none;
+}
+
 .page.active {
     display: flex;
     animation: page-in 420ms ease both;
