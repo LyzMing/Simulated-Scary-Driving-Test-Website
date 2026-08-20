@@ -25,7 +25,7 @@ const questions = [
         id: 3,
         text: "驾驶机动车不得超越正在超车的车辆。",
         options: ["A：正确", "B：错误"],
-        answer: "B",
+        answer: "A",
         image: null
     },
     {
