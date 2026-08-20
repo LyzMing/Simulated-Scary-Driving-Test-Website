@@ -34,10 +34,6 @@
 
                 <div id="result-message" class="result-message"></div>
 
-                <div id="swipe-hint" class="swipe-hint" style="display: none;">
-                    ← 从右向左滑动进入下一题
-                </div>
-
                 <button id="prev-btn" class="prev-btn">← 上一题</button>
             </div>
         </div>
@@ -49,6 +45,18 @@
             <h1>🎉 恭喜完成！</h1>
             <p id="final-score"></p>
             <button id="restart-btn">重新开始</button>
+        </div>
+    </div>
+
+    <!-- 夜间模式切换提示 -->
+    <div id="night-mode-modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <h2>🌙 夜间模式</h2>
+            <p>是否切换到夜间模式？</p>
+            <div class="modal-buttons">
+                <button id="switch-night-btn" class="modal-btn night">切换夜间模式</button>
+                <button id="keep-day-btn" class="modal-btn day">保持日间模式</button>
+            </div>
         </div>
     </div>
 

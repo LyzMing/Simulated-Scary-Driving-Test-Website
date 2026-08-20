@@ -119,6 +119,7 @@ let currentQuestion = 0;
 let score = 0;
 let isAnswered = false;
 let answers = {}; // 记录每道题的答题状态
+let isNightMode = false; // 夜间模式状态
 
 // DOM 元素
 const startPage = document.getElementById('start-page');
@@ -132,8 +133,10 @@ const questionText = document.getElementById('question-text');
 const questionImage = document.getElementById('question-image');
 const optionsContainer = document.querySelector('.options');
 const resultMessage = document.getElementById('result-message');
-const swipeHint = document.getElementById('swipe-hint');
 const finalScore = document.getElementById('final-score');
+const nightModeModal = document.getElementById('night-mode-modal');
+const switchNightBtn = document.getElementById('switch-night-btn');
+const keepDayBtn = document.getElementById('keep-day-btn');
 
 // 开始答题
 startBtn.addEventListener('click', () => {
@@ -142,7 +145,13 @@ startBtn.addEventListener('click', () => {
     currentQuestion = 0;
     score = 0;
     answers = {};
+    isNightMode = false;
+    document.body.classList.remove('night-mode');
     loadQuestion();
+    // 第0题显示夜间模式切换提示
+    if (currentQuestion === 0) {
+        showNightModeModal();
+    }
 });
 
 // 重新开始
@@ -153,6 +162,23 @@ restartBtn.addEventListener('click', () => {
 
 // 上一题按钮
 prevBtn.addEventListener('click', prevQuestion);
+
+// 显示夜间模式切换提示
+function showNightModeModal() {
+    nightModeModal.style.display = 'flex';
+}
+
+// 切换到夜间模式
+switchNightBtn.addEventListener('click', () => {
+    isNightMode = true;
+    document.body.classList.add('night-mode');
+    nightModeModal.style.display = 'none';
+});
+
+// 保持日间模式
+keepDayBtn.addEventListener('click', () => {
+    nightModeModal.style.display = 'none';
+});
 
 // 加载题目
 function loadQuestion() {
@@ -178,7 +204,6 @@ function loadQuestion() {
     isAnswered = false;
     resultMessage.textContent = '';
     resultMessage.className = 'result-message';
-    swipeHint.style.display = 'none';
 
     // 移除之前创建的下一题按钮
     const existingNextBtn = document.getElementById('next-btn');
@@ -200,6 +225,11 @@ function loadQuestion() {
     // 如果已经答过这道题，显示之前的答题状态
     if (answers[currentQuestion]) {
         showPreviousAnswer();
+    }
+
+    // 如果是第0题且不是夜间模式，显示夜间模式切换提示
+    if (currentQuestion === 0 && !isNightMode) {
+        showNightModeModal();
     }
 }
 
@@ -226,7 +256,14 @@ function showPreviousAnswer() {
     } else {
         resultMessage.textContent = '✗ 错误';
         resultMessage.className = 'result-message wrong';
-        swipeHint.style.display = 'block';
+
+        // 显示下一题按钮
+        const nextBtn = document.createElement('button');
+        nextBtn.id = 'next-btn';
+        nextBtn.className = 'next-btn';
+        nextBtn.textContent = '下一题 →';
+        nextBtn.addEventListener('click', nextQuestion);
+        resultMessage.parentNode.insertBefore(nextBtn, resultMessage.nextSibling);
     }
 }
 
@@ -269,7 +306,6 @@ function selectOption(btn, selected) {
     } else {
         resultMessage.textContent = '✗ 错误';
         resultMessage.className = 'result-message wrong';
-        swipeHint.style.display = 'block';
 
         // 显示下一题按钮
         const nextBtn = document.createElement('button');
@@ -277,7 +313,7 @@ function selectOption(btn, selected) {
         nextBtn.className = 'next-btn';
         nextBtn.textContent = '下一题 →';
         nextBtn.addEventListener('click', nextQuestion);
-        swipeHint.parentNode.insertBefore(nextBtn, swipeHint);
+        resultMessage.parentNode.insertBefore(nextBtn, resultMessage.nextSibling);
     }
 }
 
