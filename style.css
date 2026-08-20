@@ -245,8 +245,28 @@ body.night-mode .option-btn:hover {
     border-color: #667eea;
 }
 
+body.night-mode .option-btn.correct {
+    background: #28a745;
+    color: white;
+    border-color: #28a745;
+}
+
+body.night-mode .option-btn.wrong {
+    background: #dc3545;
+    color: white;
+    border-color: #dc3545;
+}
+
 body.night-mode #final-score {
     color: #e0e0e0;
+}
+
+body.night-mode .result-message.correct {
+    color: #28a745;
+}
+
+body.night-mode .result-message.wrong {
+    color: #dc3545;
 }
 
 /* 模态框 */

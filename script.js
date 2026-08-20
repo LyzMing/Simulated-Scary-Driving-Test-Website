@@ -286,6 +286,7 @@ let score = 0;
 let isAnswered = false;
 let answers = {}; // 记录每道题的答题状态
 let isNightMode = false; // 夜间模式状态
+let isTransitioning = false; // 防止答题后滑动跳题
 
 // DOM 元素
 const startPage = document.getElementById('start-page');
@@ -344,6 +345,7 @@ keepDayBtn.addEventListener('click', () => {
 
 // 加载题目
 function loadQuestion() {
+    isTransitioning = false; // 重新启用滑动
     const question = questions[currentQuestion];
     currentQuestionEl.textContent = currentQuestion + 1;
 
@@ -481,7 +483,8 @@ function selectOption(btn, selected) {
         resultMessage.textContent = '✓ 正确！';
         resultMessage.className = 'result-message correct';
 
-        // 答对自动进入下一题
+        // 答对自动进入下一题，期间禁用滑动
+        isTransitioning = true;
         setTimeout(() => {
             nextQuestion();
         }, 1000);
@@ -552,8 +555,8 @@ function handleSwipe() {
     // 滑动距离超过50px
     if (Math.abs(diff) > 50) {
         if (diff < 0) {
-            // 从右向左滑动 → 下一题（空题或答过题才能下一题）
-            if (isAnswered || isEmptyQuestion(questions[currentQuestion])) {
+            // 从右向左滑动 → 下一题（空题或答过题才能下一题，且不能在答题过渡期间）
+            if (!isTransitioning && (isAnswered || isEmptyQuestion(questions[currentQuestion]))) {
                 nextQuestion();
             }
         } else {
