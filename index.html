@@ -2,64 +2,106 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>答题测试</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#eef2ff">
+    <title>模拟驾驶安全考试</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
-    <!-- 开始页面 -->
-    <div id="start-page" class="page active">
-        <div class="container">
-            <h1>答题测试</h1>
-            <p>共38道题目，测试你的交通安全知识</p>
-            <button id="start-btn">开始答题</button>
-        </div>
-    </div>
+    <div id="blood-overlay" aria-hidden="true"></div>
+    <div id="effect-overlay" aria-hidden="true"></div>
+    <div id="word-storm" aria-hidden="true"></div>
 
-    <!-- 答题页面 -->
-    <div id="quiz-page" class="page">
-        <div class="container">
-            <div class="progress">
-                <span id="current-question">1</span> / <span id="total-questions">38</span>
+    <header id="game-toolbar" class="game-toolbar" aria-label="游戏设置">
+        <button id="mute-btn" class="icon-btn" type="button" aria-pressed="false">声音：开</button>
+        <button id="motion-btn" class="icon-btn" type="button" aria-pressed="false">动态：开</button>
+        <button id="toolbar-restart-btn" class="icon-btn danger-quiet" type="button">重新开始</button>
+    </header>
+
+    <main>
+        <section id="start-page" class="page active" aria-labelledby="start-title">
+            <div class="container start-card">
+                <p class="eyebrow">SIMULATED DRIVING TEST</p>
+                <h1 id="start-title">模拟驾驶安全考试</h1>
+                <p class="lead">共51个题号。请根据道路交通安全知识完成作答。</p>
+                <div class="start-actions">
+                    <button id="continue-btn" class="primary-btn" type="button" hidden>继续考试</button>
+                    <button id="start-btn" class="secondary-btn" type="button">开始新考试</button>
+                </div>
+                <p id="save-summary" class="save-summary" hidden></p>
             </div>
+        </section>
 
-            <div class="question-container">
-                <p id="question-text"></p>
-                <div id="question-image" class="question-image"></div>
-
-                <div class="options">
-                    <button class="option-btn" data-option="A">A：正确</button>
-                    <button class="option-btn" data-option="B">B：错误</button>
+        <section id="quiz-page" class="page" aria-labelledby="question-text">
+            <div id="quiz-card" class="container quiz-card">
+                <div class="quiz-header">
+                    <div class="progress" aria-label="答题进度">
+                        <span id="current-question">1</span><span class="progress-divider">/</span><span id="total-questions">51</span>
+                    </div>
+                    <span id="mode-indicator" class="mode-indicator">日间</span>
                 </div>
 
-                <div id="result-message" class="result-message"></div>
+                <div class="question-container">
+                    <p id="question-text"></p>
+                    <div id="question-image" class="question-image" hidden></div>
+                    <div id="image-placeholder" class="image-placeholder" hidden></div>
 
-                <button id="prev-btn" class="prev-btn">← 上一题</button>
+                    <div id="options" class="options" role="group" aria-label="答案选项"></div>
+                    <div id="result-message" class="result-message" role="status" aria-live="polite"></div>
+                    <div id="answer-analysis" class="answer-analysis" hidden></div>
+
+                    <div class="question-actions">
+                        <button id="prev-btn" class="nav-btn prev-btn" type="button">← 上一题</button>
+                        <button id="submit-btn" class="primary-btn compact" type="button" hidden>提交答案</button>
+                        <button id="next-btn" class="nav-btn next-btn" type="button" hidden>下一题 →</button>
+                    </div>
+                </div>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <!-- 完成页面 -->
-    <div id="complete-page" class="page">
-        <div class="container">
-            <h1>🎉 恭喜完成！</h1>
-            <p id="final-score"></p>
-            <button id="restart-btn">重新开始</button>
-        </div>
-    </div>
-
-    <!-- 夜间模式切换提示 -->
-    <div id="night-mode-modal" class="modal" style="display: none;">
-        <div class="modal-content">
-            <h2>🌙 夜间模式</h2>
-            <p>是否切换到夜间模式？</p>
-            <div class="modal-buttons">
-                <button id="switch-night-btn" class="modal-btn night">切换夜间模式</button>
-                <button id="keep-day-btn" class="modal-btn day">保持日间模式</button>
+        <section id="be-page" class="page" aria-labelledby="be-title">
+            <div class="container ending-card bad-ending-card">
+                <p class="eyebrow">BAD END</p>
+                <h1 id="be-title">考试中止</h1>
+                <p>尖叫声被黑暗吞没，一切又回到了入口。</p>
+                <div class="start-actions">
+                    <button id="retry-hidden-btn" class="primary-btn" type="button">从隐藏入口重试</button>
+                    <button id="be-restart-btn" class="secondary-btn" type="button">彻底重新开始</button>
+                </div>
             </div>
+        </section>
+
+        <section id="rewind-page" class="page" aria-labelledby="rewind-title">
+            <div class="container ending-card rewind-card">
+                <p class="eyebrow">REWIND STARTED</p>
+                <h1 id="rewind-title">回到过去</h1>
+                <p>时间已经开始倒转。故事将在新的第49题继续。</p>
+                <img id="rewind-image" src="配图/50图.png" alt="白衣女子、孩子与鹿的全家福">
+                <button id="rewind-restart-btn" class="secondary-btn" type="button">重新开始</button>
+            </div>
+        </section>
+    </main>
+
+    <div id="modal" class="modal" hidden aria-hidden="true">
+        <div class="modal-content" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+            <h2 id="modal-title"></h2>
+            <p id="modal-message"></p>
+            <div id="modal-buttons" class="modal-buttons"></div>
         </div>
     </div>
 
-    <script src="script.js"></script>
+    <aside id="debug-panel" class="debug-panel" hidden>
+        <strong>剧情测试</strong>
+        <button type="button" data-debug-action="hidden">隐藏线入口</button>
+        <button type="button" data-debug-action="38">第38题</button>
+        <button type="button" data-debug-action="49">第49题</button>
+        <button type="button" data-debug-action="50">第50题</button>
+    </aside>
+
+    <script defer src="js/game-data.js"></script>
+    <script defer src="js/save-manager.js"></script>
+    <script defer src="js/game-engine.js"></script>
+    <script defer src="js/effect-runner.js"></script>
+    <script defer src="script.js"></script>
 </body>
 </html>
