@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>答题测试</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- 开始页面 -->
+    <div id="start-page" class="page active">
+        <div class="container">
+            <h1>答题测试</h1>
+            <p>共15道题目，测试你的交通安全知识</p>
+            <button id="start-btn">开始答题</button>
+        </div>
+    </div>
+
+    <!-- 答题页面 -->
+    <div id="quiz-page" class="page">
+        <div class="container">
+            <div class="progress">
+                <span id="current-question">1</span> / <span id="total-questions">15</span>
+            </div>
+
+            <div class="question-container">
+                <p id="question-text"></p>
+                <div id="question-image" class="question-image"></div>
+
+                <div class="options">
+                    <button class="option-btn" data-option="A">A：正确</button>
+                    <button class="option-btn" data-option="B">B：错误</button>
+                </div>
+
+                <div id="result-message" class="result-message"></div>
+
+                <div id="swipe-hint" class="swipe-hint" style="display: none;">
+                    从左向右滑动进入下一题 →
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 完成页面 -->
+    <div id="complete-page" class="page">
+        <div class="container">
+            <h1>🎉 恭喜完成！</h1>
+            <p id="final-score"></p>
+            <button id="restart-btn">重新开始</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
