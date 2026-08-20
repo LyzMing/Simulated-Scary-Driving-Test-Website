@@ -111,8 +111,174 @@ const questions = [
         options: ["A：正确", "B：错误"],
         answer: "B",
         image: null
+    },
+    // 空题（只显示题号，无选项）
+    {
+        id: 16,
+        text: "",
+        options: [],
+        answer: null,
+        image: null
+    },
+    {
+        id: 17,
+        text: "",
+        options: [],
+        answer: null,
+        image: null
+    },
+    {
+        id: 18,
+        text: "",
+        options: [],
+        answer: null,
+        image: null
+    },
+    {
+        id: 19,
+        text: "",
+        options: [],
+        answer: null,
+        image: null
+    },
+    {
+        id: 20,
+        text: "",
+        options: [],
+        answer: null,
+        image: null
+    },
+    // 选择题（4个选项）
+    {
+        id: 21,
+        text: "驾驶机动车在这种条件的弯道处怎样转弯最安全？",
+        options: ["A、减速靠右侧行驶", "B、骑轧路中心行驶", "C、靠弯道外侧行驶", "D、借对向车道行驶"],
+        answer: "A",
+        image: "配图/21图.jpg"
+    },
+    {
+        id: 22,
+        text: "如图所示，A车正确的做法是什么？",
+        options: ["A、鸣喇叭从左侧超越自行车", "B、减速待自行车通过后再从B车左侧超越", "C、停车等待B车驶离后，在原车道行驶", "D、借用对向车道加速通过"],
+        answer: "B",
+        image: "配图/22图.jpg"
+    },
+    {
+        id: 23,
+        text: "驾驶机动车从高速公路加速车道汇入行车道车流时，以下做法正确的是什么?",
+        options: ["A、从正常行驶车辆后驶入行车道", "B、从正常行驶车辆前驶入行车道", "C、停车等待正常行驶车辆通过", "D、加速直接驶入行车道"],
+        answer: "A",
+        image: null
+    },
+    {
+        id: 24,
+        text: "《禁毒法》所称的毒品，是指鸦片、海洛因、甲基苯丙胺（冰毒）、吗啡、大麻、可卡因，以及国家规定管制的其他能够使人形成瘾癖的（ ）。",
+        options: ["A、精神药品", "B、麻醉药品和精神药品", "C、麻醉药品", "D、各类药物"],
+        answer: "B",
+        image: null
+    },
+    {
+        id: 25,
+        text: "如图所示，驾驶机动车驶离停车场进主路时，以下做法正确的是什么？",
+        options: ["A、加速汇入主路车流", "B、可以不避让主路车辆", "C、无需观察,鸣喇叭示意后汇入车流", "D、减速慢行，在不妨碍主路车辆行驶的前提下汇入车流"],
+        answer: "D",
+        image: null
+    },
+    {
+        id: 26,
+        text: "驾驶机动车过程中，防抱死制动系统（ABS）在什么情况下可以最大限度发挥制动器效能?",
+        options: ["A、间歇制动", "B、持续制动", "C、缓踏制动踏板", "D、紧急制动"],
+        answer: "D",
+        image: null
+    },
+    {
+        id: 27,
+        text: "在对众多吸毒者进行调查时发现，占据第一位的吸毒原因是（ ）。",
+        options: ["A、借助吸毒逃离现实，寻求解脱", "B、受贩毒者引诱", "C、贪慕虚荣，赶时髦", "D、盲目好奇，追求享乐和刺激"],
+        answer: "D",
+        image: null
+    },
+    {
+        id: 28,
+        text: "驾驶汽车在进出隧道时应注意什么？",
+        options: ["A、开启远光灯", "B、适当提高车速", "C、关闭近光灯", "D、提前降低车速"],
+        answer: "D",
+        image: null
+    },
+    {
+        id: 29,
+        text: "驾驶车辆驶入高速公路加速车道后，遇行车道车辆稀少时，以下做法正确的是什么？",
+        options: ["A、从正常行驶车辆后驶入行车道", "B、从正常行驶车辆前驶入行车道", "C、停车等待正常行驶车辆通过", "D、加速驶入行车道"],
+        answer: "A",
+        image: null
+    },
+    {
+        id: 30,
+        text: "在未经许可的情况下，私自进入未开放高速路段行驶，以下做法正确的是？",
+        options: ["A、立即掉头逆向驶回入口，按原路快速离开", "B、继续向前行驶，寻找最近的服务区停靠并咨询工作人员", "C、靠边停车，锁车后步行至主路寻找交警求助", "D、保持车速，从最近的收费站或应急出口驶离高速，并主动接受处理"],
+        answer: "D",
+        image: null
+    },
+    {
+        id: 31,
+        text: "高速公路上行车，如果因疏忽驶过出口且下一出口距离较远时怎样做？",
+        options: ["A、沿路肩倒车驶回", "B、继续向前行驶", "C、立即停车", "D、在原地掉头"],
+        answer: "B",
+        image: null
+    },
+    {
+        id: 32,
+        text: "驾驶车辆驶入高速公路加速车道后，遇行车道车辆稀少时，以下做法正确的是什么？",
+        options: ["A、从正常行驶车辆后驶入行车道", "B、从正常行驶车辆前驶入行车道", "C、停车等待正常行驶车辆通过", "D、加速驶入行车道"],
+        answer: "A",
+        image: null
+    },
+    {
+        id: 33,
+        text: "驾驶机动车在高速公路加速车道上行驶，可以有下列哪种行为?",
+        options: ["A、倒车", "B、超车", "C、停车", "D、加速"],
+        answer: "D",
+        image: null
+    },
+    {
+        id: 34,
+        text: "如图所示，驾驶机动车驶入减速车道后最高时速不能超过多少？",
+        options: ["A、60公里/小时", "B、50公里/小时", "C、40公里/小时", "D、30公里/小时"],
+        answer: "C",
+        image: "配图/34图.png"
+    },
+    {
+        id: 35,
+        text: "在同向3车道高速公路上行车，车速高于每小时90公里、低于每小时110公里的机动车不应在哪条车道上行驶？",
+        options: ["A、最左侧", "B、中间", "C、最右侧", "D、任意"],
+        answer: "A",
+        image: null
+    },
+    {
+        id: 36,
+        text: "驾驶机动车进入高速公路隧道前需要注意什么？",
+        options: ["A、开启远光灯行驶", "B、开启示宽灯、尾灯行驶", "C、开启近光灯行驶", "D、到达隧道口时鸣喇叭"],
+        answer: "C",
+        image: "配图/36图.jpg"
+    },
+    {
+        id: 37,
+        text: "在隧道内发生车辆故障时，以下做法正确的是（ ）。",
+        options: ["A、能够继续行驶的，尽可能把车驶出隧道", "B、能够继续行驶的，迅速掉头驶离隧道", "C、不能继续行驶的，立即停车维修", "D、不能继续行驶的，下车将车辆推离车道"],
+        answer: "A",
+        image: null
     }
 ];
+
+// 判断是否为空题
+function isEmptyQuestion(question) {
+    return !question.text && question.options.length === 0;
+}
+
+// 计算可答题总数
+function getAnswerableCount() {
+    return questions.filter(q => !isEmptyQuestion(q)).length;
+}
 
 // 游戏状态
 let currentQuestion = 0;
@@ -148,10 +314,6 @@ startBtn.addEventListener('click', () => {
     isNightMode = false;
     document.body.classList.remove('night-mode');
     loadQuestion();
-    // 第0题显示夜间模式切换提示
-    if (currentQuestion === 0) {
-        showNightModeModal();
-    }
 });
 
 // 重新开始
@@ -184,7 +346,6 @@ keepDayBtn.addEventListener('click', () => {
 function loadQuestion() {
     const question = questions[currentQuestion];
     currentQuestionEl.textContent = currentQuestion + 1;
-    questionText.textContent = question.text;
 
     // 清空图片
     questionImage.innerHTML = '';
@@ -194,6 +355,9 @@ function loadQuestion() {
         const img = document.createElement('img');
         img.src = question.image;
         img.alt = '题目配图';
+        img.onerror = function() {
+            this.style.display = 'none';
+        };
         questionImage.appendChild(img);
     }
 
@@ -210,6 +374,24 @@ function loadQuestion() {
     if (existingNextBtn) {
         existingNextBtn.remove();
     }
+
+    // 空题处理：只显示题号，直接显示下一题按钮
+    if (isEmptyQuestion(question)) {
+        questionText.textContent = '';
+        optionsContainer.innerHTML = '';
+
+        // 空题直接显示下一题按钮
+        const nextBtn = document.createElement('button');
+        nextBtn.id = 'next-btn';
+        nextBtn.className = 'next-btn';
+        nextBtn.textContent = '下一题 →';
+        nextBtn.addEventListener('click', nextQuestion);
+        optionsContainer.appendChild(nextBtn);
+        return;
+    }
+
+    // 正常题目
+    questionText.textContent = question.text;
 
     // 生成选项按钮
     optionsContainer.innerHTML = '';
@@ -339,10 +521,10 @@ function prevQuestion() {
 function showComplete() {
     quizPage.classList.remove('active');
     completePage.classList.add('active');
-    finalScore.textContent = `你答对了 ${score} / ${questions.length} 道题`;
+    finalScore.textContent = `你答对了 ${score} / ${getAnswerableCount()} 道题`;
 }
 
-// 滑动处理（从左向右）
+// 滑动处理
 let touchStartX = 0;
 let touchEndX = 0;
 
@@ -370,8 +552,8 @@ function handleSwipe() {
     // 滑动距离超过50px
     if (Math.abs(diff) > 50) {
         if (diff < 0) {
-            // 从右向左滑动 → 下一题（需要答过题才能下一题）
-            if (isAnswered) {
+            // 从右向左滑动 → 下一题（空题或答过题才能下一题）
+            if (isAnswered || isEmptyQuestion(questions[currentQuestion])) {
                 nextQuestion();
             }
         } else {
