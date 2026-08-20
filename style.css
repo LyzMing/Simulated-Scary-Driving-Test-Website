@@ -183,6 +183,33 @@ p {
     box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
 }
 
+.prev-btn {
+    background: #6c757d;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    border-radius: 25px;
+    cursor: pointer;
+    margin-top: 15px;
+    display: block;
+    margin-left: auto;
+    margin-right: auto;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.prev-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(108, 117, 125, 0.4);
+}
+
+.prev-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
 #final-score {
     font-size: 24px;
     color: #333;

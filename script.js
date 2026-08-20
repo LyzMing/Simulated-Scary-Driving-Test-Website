@@ -118,6 +118,7 @@ const questions = [
 let currentQuestion = 0;
 let score = 0;
 let isAnswered = false;
+let answers = {}; // 记录每道题的答题状态
 
 // DOM 元素
 const startPage = document.getElementById('start-page');
@@ -125,6 +126,7 @@ const quizPage = document.getElementById('quiz-page');
 const completePage = document.getElementById('complete-page');
 const startBtn = document.getElementById('start-btn');
 const restartBtn = document.getElementById('restart-btn');
+const prevBtn = document.getElementById('prev-btn');
 const currentQuestionEl = document.getElementById('current-question');
 const questionText = document.getElementById('question-text');
 const questionImage = document.getElementById('question-image');
@@ -139,6 +141,7 @@ startBtn.addEventListener('click', () => {
     quizPage.classList.add('active');
     currentQuestion = 0;
     score = 0;
+    answers = {};
     loadQuestion();
 });
 
@@ -147,6 +150,9 @@ restartBtn.addEventListener('click', () => {
     completePage.classList.remove('active');
     startPage.classList.add('active');
 });
+
+// 上一题按钮
+prevBtn.addEventListener('click', prevQuestion);
 
 // 加载题目
 function loadQuestion() {
@@ -164,6 +170,9 @@ function loadQuestion() {
         img.alt = '题目配图';
         questionImage.appendChild(img);
     }
+
+    // 控制上一题按钮状态
+    prevBtn.disabled = currentQuestion === 0;
 
     // 重置状态
     isAnswered = false;
@@ -187,6 +196,38 @@ function loadQuestion() {
         btn.addEventListener('click', () => selectOption(btn, option.charAt(0)));
         optionsContainer.appendChild(btn);
     });
+
+    // 如果已经答过这道题，显示之前的答题状态
+    if (answers[currentQuestion]) {
+        showPreviousAnswer();
+    }
+}
+
+// 显示之前的答题状态
+function showPreviousAnswer() {
+    const answer = answers[currentQuestion];
+    isAnswered = true;
+
+    // 标记所有按钮
+    const allBtns = optionsContainer.querySelectorAll('.option-btn');
+    allBtns.forEach(b => {
+        b.disabled = true;
+        if (b.dataset.option === answer.correctAnswer) {
+            b.classList.add('correct');
+        }
+        if (b.dataset.option === answer.selectedAnswer && !answer.isCorrect) {
+            b.classList.add('wrong');
+        }
+    });
+
+    if (answer.isCorrect) {
+        resultMessage.textContent = '✓ 正确！';
+        resultMessage.className = 'result-message correct';
+    } else {
+        resultMessage.textContent = '✗ 错误';
+        resultMessage.className = 'result-message wrong';
+        swipeHint.style.display = 'block';
+    }
 }
 
 // 选择选项
@@ -196,6 +237,13 @@ function selectOption(btn, selected) {
     isAnswered = true;
     const question = questions[currentQuestion];
     const isCorrect = selected === question.answer;
+
+    // 记录答题状态
+    answers[currentQuestion] = {
+        selectedAnswer: selected,
+        correctAnswer: question.answer,
+        isCorrect: isCorrect
+    };
 
     // 标记所有按钮
     const allBtns = optionsContainer.querySelectorAll('.option-btn');
@@ -243,6 +291,14 @@ function nextQuestion() {
     }
 }
 
+// 上一题
+function prevQuestion() {
+    if (currentQuestion > 0) {
+        currentQuestion--;
+        loadQuestion();
+    }
+}
+
 // 显示完成页面
 function showComplete() {
     quizPage.classList.remove('active');
@@ -274,11 +330,17 @@ quizPage.addEventListener('mouseup', (e) => {
 });
 
 function handleSwipe() {
-    if (!isAnswered) return;
-
     const diff = touchEndX - touchStartX;
-    // 滑动距离超过50px且从右向左
-    if (diff < -50) {
-        nextQuestion();
+    // 滑动距离超过50px
+    if (Math.abs(diff) > 50) {
+        if (diff < 0) {
+            // 从右向左滑动 → 下一题（需要答过题才能下一题）
+            if (isAnswered) {
+                nextQuestion();
+            }
+        } else {
+            // 从左向右滑动 → 上一题（任何时候都可以）
+            prevQuestion();
+        }
     }
 }
