@@ -187,3 +187,37 @@ p {
     font-size: 24px;
     color: #333;
 }
+
+/* 移动端优化 */
+@media (max-width: 480px) {
+    .container {
+        padding: 20px;
+        width: 95%;
+    }
+
+    h1 {
+        font-size: 24px;
+    }
+
+    #question-text {
+        font-size: 16px;
+    }
+
+    .option-btn {
+        padding: 12px 15px;
+        font-size: 14px;
+    }
+
+    .progress {
+        font-size: 20px;
+    }
+
+    .result-message {
+        font-size: 18px;
+    }
+
+    .next-btn {
+        padding: 10px 25px;
+        font-size: 14px;
+    }
+}

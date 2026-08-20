@@ -277,8 +277,8 @@ function handleSwipe() {
     if (!isAnswered) return;
 
     const diff = touchEndX - touchStartX;
-    // 滑动距离超过50px且从左向右
-    if (diff > 50) {
+    // 滑动距离超过50px且从右向左
+    if (diff < -50) {
         nextQuestion();
     }
 }
