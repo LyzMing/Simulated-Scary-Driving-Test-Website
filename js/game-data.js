@@ -65,12 +65,23 @@
     ];
 
     const innerQuestions = [
+        q(49, '眼前一片漆黑，身体动弹不得，已经死了，你怀里的也已经死了，身上越来越重', ['A：放弃', 'B：追究'], 'B', { id: 'inner-49', route: 'inner', autoAdvance: false }),
+        q(48, '你们被扔下了山崖，周围一片寂静。怀里是你的孩子，以下你能做的是', ['A：追究', 'B：怨恨', 'C：不甘', 'D：哭诉'], 'A', { id: 'inner-48', route: 'inner', autoAdvance: false }),
+        q(47, '夜间在高速公路上行驶时，你发现前方　米右侧护栏外有一名行人似乎在招手求助。此时路面空旷，无其他车辆。以下做法正确的是', ['A：放弃', 'B：追究'], 'B', { id: 'inner-47', route: 'inner', autoAdvance: false }),
+        q(46, '你驾驶车辆在高速隧道内，出隧道口时突然发现前方有"一头鹿"横穿，而前方紧接着是急转弯路段。以下做法中，发生了的是？', ['A、立即松开油门，利用发动机制动进行初步减速', 'B、观察右侧路肩或山体情况，在出隧道后用车身侧面轻贴护栏或山体岩壁，利用摩擦力辅助降速', 'C、在速度降至相对可控范围后，再根据动物位置判断是否微调方向避让，若无法避让则握稳方向盘正面碰撞，绝不猛打方向', 'D、径直撞上享受惨叫'], 'D', { id: 'inner-46', route: 'inner', autoAdvance: false }),
+        q(45, '夜间在高速公路上行驶时，你身旁坐着一位。你选择的做法是？', ['A. 拒绝', 'B. 同情', 'C. 安抚', 'D. 追究'], ['B', 'C', 'D'], { id: 'inner-45', route: 'inner', type: 'multi', autoAdvance: false }),
+        q(36, '驾驶机动车进入高速公路隧道前需要注意什么？', ['A:开启远光灯行驶', 'B:开启示宽灯、尾灯行驶', 'C:开启近光灯行驶', 'D:到达隧道口时鸣喇叭'], 'C', { id: 'inner-36', route: 'inner', autoAdvance: false }),
+        q(35, '在同向3车道高速公路上行车，车速高于每小时90公里、低于每小时110公里的机动车不应在哪条车道上行驶？', ['A:最左侧', 'B:中间', 'C:最右侧', 'D:任意'], 'A', { id: 'inner-35', route: 'inner', autoAdvance: false }),
+        q(34, '在高速公路上停车并搬下黑色袋子扔到路边，袋子里最有可能的是什么：', ['A：鹿', 'B：垃圾', 'C：无关紧要的东西', 'D：我'], 'D', { id: 'inner-34', route: 'inner', autoAdvance: false }),
+        q(33, '驾驶机动车在高速公路加速车道上行驶，可以有下列哪种行为?', ['A:倒车', 'B:超车', 'C:停车', 'D:加速'], 'D', { id: 'inner-33', route: 'inner', autoAdvance: false }),
+        q(30, '在经过许可的情况下，进入未开放高速路段行驶，以下做法正确的是？', ['A、继续行驶', 'B、 继续向前行驶，寻找最近的服务区停靠并咨询工作人员', 'C、 靠边停车，锁车后步行至主路寻找交警求助', 'D、 保持车速，从最近的收费站或应急出口驶离高速，并主动接受处理'], 'A', { id: 'inner-30', route: 'inner', autoAdvance: false }),
+        q(24, '你和你的朋友吸了毒，接下来该怎么做', ['A：回家', 'B：自首', 'C：驾车取乐', 'D：自杀'], 'C', { id: 'inner-24', route: 'inner', autoAdvance: false }),
+        q(21, '在夜晚行车时要牢记交通交规，如下不正确的是', ['A：高速行驶', 'B：减速慢行', 'C：谨慎驾驶', 'D：使用近光灯'], 'A', { id: 'inner-21', route: 'inner', autoAdvance: false }),
         q(20, '道路之上人人平等', tf, 'A', { id: 'inner-20', route: 'inner', autoAdvance: false }),
         q(19, '在夜晚行驶时，行人容易受惊，因此需要减速慢行', tf, 'A', { id: 'inner-19', route: 'inner', autoAdvance: false }),
-        q(18, '驾驶汽车时应以保证行人安全为前提行驶', tf, 'A', { id: 'inner-18', route: 'inner', autoAdvance: false }),
+        q(18, '驾驶汽车的时应以保证行人安全为前提行驶', tf, 'A', { id: 'inner-18', route: 'inner', autoAdvance: false }),
         q(17, '必须保证行人生命安全', tf, 'A', { id: 'inner-17', route: 'inner', autoAdvance: false }),
-        q(16, '未能按照正确方式行驶的人，应遭到惩罚的代价', tf, 'A', { id: 'inner-16', route: 'inner', autoAdvance: false }),
-        q(15, '死者为大', tf, 'A', { id: 'inner-15', route: 'inner', autoAdvance: false })
+        q(16, '未能按照正确方式行驶的人，应遭到惩罚的代价', tf, 'A', { id: 'inner-16', route: 'inner', autoAdvance: false })
     ];
 
     const nodes = {};
@@ -88,6 +99,6 @@
         totalDisplayQuestions: 51,
         nodes: Object.freeze(nodes),
         surfaceOrder: Object.freeze(surfaceOrder),
-        innerOrder: Object.freeze(innerQuestions.map((node) => node.id))
+        innerOrder: ['inner-49', 'inner-48', 'inner-47', 'inner-46', 'inner-45', 'inner-36', 'inner-35', 'inner-34', 'inner-33', 'inner-30', 'inner-24', 'inner-21', 'inner-20', 'inner-19', 'inner-18', 'inner-17', 'inner-16']
     });
 })(typeof window !== 'undefined' ? window : globalThis);

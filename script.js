@@ -18,6 +18,7 @@
         startBtn: document.getElementById('start-btn'),
         continueBtn: document.getElementById('continue-btn'),
         saveSummary: document.getElementById('save-summary'),
+        nightModeBtn: document.getElementById('night-mode-btn'),
         muteBtn: document.getElementById('mute-btn'),
         motionBtn: document.getElementById('motion-btn'),
         toolbarRestartBtn: document.getElementById('toolbar-restart-btn'),
@@ -57,7 +58,16 @@
     engine.subscribe(({ state, effects: emittedEffects }) => {
         if (state.status !== 'idle') saveManager.save(state);
         render(state);
-        effects.run(emittedEffects, engine);
+        // 只执行schedule effect（用于自动跳转），禁用视觉/音效
+        emittedEffects.forEach(effect => {
+            if (effect.type === 'schedule' && effect.action && effect.delay) {
+                setTimeout(() => engine.dispatch(effect.action), effect.delay);
+            } else if (effect.type === 'night-prompt') {
+                showNightModal(effect.promptKey, effect.forced);
+            } else if (effect.type === 'confirm-q50') {
+                showQ50Confirmation();
+            }
+        });
     });
 
     function showPage(name) {
@@ -75,6 +85,8 @@
             elements.body.classList.toggle(`blood-level-${level}`, state.bloodLevel === level);
         }
 
+        elements.nightModeBtn.textContent = state.nightMode ? '夜间模式' : '日间模式';
+        elements.nightModeBtn.disabled = state.route === 'inner'; // 里线中不能切换
         elements.muteBtn.textContent = state.settings.muted ? '声音：关' : '声音：开';
         elements.muteBtn.setAttribute('aria-pressed', String(state.settings.muted));
         elements.motionBtn.textContent = state.settings.reduceMotion ? '动态：减弱' : '动态：开';
@@ -104,7 +116,14 @@
     function renderQuestion(state) {
         const node = data.nodes[state.currentNodeId];
         const record = state.answers[node.id];
-        elements.currentQuestion.textContent = String(node.displayNumber);
+
+        // 里线显示里线题号，表线显示表线题号
+        if (node.route === 'inner') {
+            elements.currentQuestion.textContent = String(node.displayNumber) + '里';
+        } else {
+            elements.currentQuestion.textContent = String(node.displayNumber);
+        }
+
         elements.totalQuestions.textContent = String(data.totalDisplayQuestions);
         elements.modeIndicator.textContent = state.nightMode ? '夜间' : '日间';
         elements.modeIndicator.classList.toggle('night', state.nightMode);
@@ -119,6 +138,8 @@
 
     function renderQuestionText(node, state) {
         elements.questionText.replaceChildren();
+
+        // 50题处显示"回到过去"按钮
         if (node.id === 'surface-50' && state.flags.q50Submitted) {
             elements.questionText.append('你看到了全家福，真想');
             const rewindButton = document.createElement('button');
@@ -129,6 +150,14 @@
             elements.questionText.append(rewindButton, '。');
             return;
         }
+
+        // 里线题目显示里线序号
+        if (node.route === 'inner') {
+            const innerNumber = node.displayNumber;
+            elements.questionText.append(`${innerNumber}里 `, node.text);
+            return;
+        }
+
         elements.questionText.textContent = node.text;
     }
 
@@ -190,6 +219,9 @@
                     button.classList.add('wrong');
                 } else if (!record.isCorrect && node.behavior === 'exact' && node.answer.includes(optionId)) {
                     button.classList.add('correct');
+                } else if (!record.isCorrect && node.type === 'multi' && node.answer.includes(optionId)) {
+                    // 里线多选题：答错时也显示正确答案
+                    button.classList.add('correct');
                 }
             }
 
@@ -210,6 +242,18 @@
         elements.analysis.textContent = '';
 
         if (!record || !record.submitted) return;
+
+        // 里线特殊结果显示
+        if (node.route === 'inner') {
+            if (record.isCorrect) {
+                setResult('✓ 正确', 'correct');
+            } else {
+                setResult('✗ 错误', 'wrong');
+            }
+            return;
+        }
+
+        // 表线结果显示
         if (node.behavior === 'sacrifice') {
             setResult('放弃', 'wrong');
         } else if (node.behavior === 'forced') {
@@ -234,22 +278,63 @@
     }
 
     function renderActions(node, state, record) {
-        const surfaceIndex = data.surfaceOrder.indexOf(node.id);
-        elements.prevBtn.hidden = node.route !== 'surface';
-        elements.prevBtn.disabled = surfaceIndex <= 0 || state.controlLock || state.flags.q50Submitted;
+        // 上一题按钮：里线和表线都显示
+        elements.prevBtn.hidden = false;
+        if (node.route === 'inner') {
+            // 里线：检查是否有上一题（跳过未解锁的题目）
+            const innerOrder = data.innerOrder;
+            const currentIndex = innerOrder.indexOf(node.id);
+            let hasPrev = false;
+            for (let i = currentIndex - 1; i >= 0; i--) {
+                const prevNodeId = innerOrder[i];
+                if (engine.getState().answers[prevNodeId] && engine.getState().answers[prevNodeId].submitted) {
+                    hasPrev = true;
+                    break;
+                }
+            }
+            elements.prevBtn.disabled = !hasPrev || state.controlLock;
+        } else {
+            // 表线
+            const surfaceIndex = data.surfaceOrder.indexOf(node.id);
+            elements.prevBtn.disabled = surfaceIndex <= 0 || state.controlLock || state.flags.q50Submitted;
+        }
 
+        // 确认答案按钮：表线41-50的多选题和里线的多选题
         const canSubmitMulti = ['multi', 'delayed'].includes(node.type) && record && record.selected.length > 0 && !record.submitted;
         const canSubmitQ50 = node.behavior === 'forced-submit' && record && record.selected.length > 0 && !record.submitted;
         elements.submitBtn.hidden = !(canSubmitMulti || canSubmitQ50);
         elements.submitBtn.disabled = state.controlLock;
         elements.submitBtn.textContent = canSubmitQ50 ? '提交答卷' : '提交答案';
 
+        // 下一题按钮
         let showNext = false;
-        if (record && record.submitted && node.route === 'surface' && node.id !== 'surface-50') {
-            showNext = true;
+        let disableNext = false;
+        if (record && record.submitted) {
+            if (node.route === 'surface' && node.id !== 'surface-50') {
+                showNext = true;
+            } else if (node.route === 'inner') {
+                // 里线：答完当前题后显示下一题按钮
+                showNext = true;
+                // 检查是否有下一题
+                const innerOrder = data.innerOrder;
+                const currentIndex = innerOrder.indexOf(node.id);
+                let hasNext = false;
+                for (let i = currentIndex + 1; i < innerOrder.length; i++) {
+                    const nextNodeId = innerOrder[i];
+                    if (engine.getState().answers[nextNodeId] && engine.getState().answers[nextNodeId].submitted) {
+                        hasNext = true;
+                        break;
+                    }
+                }
+                // 里线49的下一题是表线50
+                if (node.id === 'inner-49') {
+                    hasNext = true;
+                }
+                disableNext = !hasNext;
+            }
         }
         elements.nextBtn.hidden = !showNext;
-        elements.nextBtn.disabled = state.controlLock;
+        elements.nextBtn.disabled = state.controlLock || disableNext;
     }
 
     function refreshStartPage() {
@@ -355,6 +440,12 @@
         effects.unlockAudio();
         const saved = saveManager.load();
         saved ? engine.dispatch({ type: 'RESTORE', state: saved }) : clearAndStart();
+    });
+    elements.nightModeBtn.addEventListener('click', () => {
+        const state = engine.getState();
+        // 里线中不能切换模式
+        if (state.route === 'inner') return;
+        engine.dispatch({ type: 'SET_NIGHT_MODE', enabled: !state.nightMode });
     });
     elements.muteBtn.addEventListener('click', () => engine.dispatch({ type: 'TOGGLE_MUTE' }));
     elements.motionBtn.addEventListener('click', () => engine.dispatch({ type: 'TOGGLE_MOTION' }));

@@ -26,8 +26,7 @@
             controlLock: false,
             swipeMode: 'normal',
             flags: {
-                hiddenRouteComplete: false,
-                inner16AwaitingSwipe: false,
+                innerRouteUnlocked: false,
                 q49RevealCount: 0,
                 q50Submitted: false,
                 rewindStarted: false
@@ -59,9 +58,7 @@
         state.route = data.nodes[state.currentNodeId].route;
         if (state.controlLock && !state.pendingAction) {
             state.controlLock = false;
-            state.swipeMode = state.currentNodeId === 'inner-16' && state.flags.inner16AwaitingSwipe
-                ? 'left-only'
-                : 'normal';
+            state.swipeMode = 'normal';
         }
         return state;
     }
@@ -111,6 +108,16 @@
                 case 'SET_NIGHT_MODE':
                     this.state.nightMode = Boolean(action.enabled);
                     if (action.promptKey) this.state.nightPromptsSeen[action.promptKey] = true;
+
+                    // 日间模式时关闭里线
+                    if (!action.enabled) {
+                        this.state.flags.innerRouteUnlocked = false;
+                        if (this.state.route === 'inner') {
+                            // 如果在里线中，返回表线50题
+                            return this._enterNode('surface-50', [{ type: 'inner-route-closed', night: false }]);
+                        }
+                    }
+
                     return this._finish([{ type: 'mode-changed', night: this.state.nightMode }]);
                 case 'TOGGLE_MUTE':
                     this.state.settings.muted = !this.state.settings.muted;
@@ -234,6 +241,12 @@
             record.submitted = true;
             record.isCorrect = this._evaluate(node, record.selected);
             this.state.answers[node.id] = record;
+
+            // 里线题目调用 _handleInnerAnswer
+            if (node.route === 'inner') {
+                return this._handleInnerAnswer(node, record);
+            }
+
             if (record.isCorrect) {
                 this.state.score += 1;
                 return this._finish([{ type: 'answer-correct' }]);
@@ -260,99 +273,85 @@
 
         _handleInnerAnswer(node, record) {
             if (!record.isCorrect) {
-                if (node.id === 'inner-15') {
-                    this.state.status = 'be';
-                    this.state.controlLock = false;
-                    return this._finish([{ type: 'scream' }, { type: 'bad-ending' }]);
-                }
-                return this._collapseInnerRoute();
+                return this._finish([{ type: 'answer-wrong' }]);
             }
 
             const guardPassed = this._innerGuardPassed(node.id);
-            if (!guardPassed) return this._collapseInnerRoute();
+            if (!guardPassed) return this._finish([{ type: 'answer-wrong' }]);
 
-            if (node.id === 'inner-16') {
-                this.state.controlLock = true;
-                this.state.swipeMode = 'none';
-                this.state.flags.inner16AwaitingSwipe = true;
-                return this._finish([
-                    { type: 'freeze-interface' },
-                    { type: 'schedule', delay: 1400, action: { type: 'UNLOCK_INNER_FINAL', expectedNodeId: node.id } }
-                ]);
-            }
-            if (node.id === 'inner-15') {
-                this.state.flags.hiddenRouteComplete = true;
-                this.state.controlLock = true;
-                this.state.swipeMode = 'none';
-                this.state.bloodLevel = Math.max(this.state.bloodLevel, 2);
-                return this._finish([
-                    { type: 'accident-sequence' },
-                    { type: 'schedule', delay: 2400, action: { type: 'RETURN_FROM_INNER', expectedNodeId: node.id } }
-                ]);
-            }
-
-            const nextByNode = {
-                'inner-20': 'inner-19',
-                'inner-19': 'inner-18',
-                'inner-18': 'inner-17',
-                'inner-17': 'inner-16'
-            };
-            const effects = [{ type: 'answer-correct' }];
-            if (node.id === 'inner-17') effects.push({ type: 'word-corruption' });
-            effects.push({ type: 'schedule', delay: node.id === 'inner-17' ? 1800 : 900, action: { type: 'ADVANCE_EXPECTED', expectedNodeId: node.id, targetNodeId: nextByNode[node.id] } });
-            return this._finish(effects);
+            return this._finish([{ type: 'answer-correct' }]);
         }
 
         _innerGuardPassed(nodeId) {
             const correct = (id) => this.state.answers[id] && this.state.answers[id].isCorrect === true;
             const wrong = (id) => this.state.answers[id] && this.state.answers[id].isCorrect === false;
-            if (nodeId === 'inner-20') return wrong('surface-14');
-            if (nodeId === 'inner-19') return wrong('surface-13');
-            if (nodeId === 'inner-18') {
+
+            // 20里：选对0和15
+            if (nodeId === 'inner-20') return correct('surface-0') && correct('surface-15');
+
+            // 19里：选对20里，且14选错
+            if (nodeId === 'inner-19') return correct('inner-20') && wrong('surface-14');
+
+            // 18里：选对19里，且13选错
+            if (nodeId === 'inner-18') return correct('inner-19') && wrong('surface-13');
+
+            // 17里：选对18里，及选对除去13，14的所有题（0到15）
+            if (nodeId === 'inner-17') {
+                if (!correct('inner-18')) return false;
                 return Array.from({ length: 16 }, (_, index) => index)
                     .filter((index) => ![13, 14].includes(index))
                     .every((index) => correct(`surface-${index}`));
             }
-            if (nodeId === 'inner-17') {
-                return correct('inner-18') && ['surface-6', 'surface-7', 'surface-10'].every(correct);
+
+            // 16里：选对17里，且6，7，10，18里均选对时
+            if (nodeId === 'inner-16') {
+                return correct('inner-17') && ['surface-6', 'surface-7', 'surface-10', 'inner-18'].every(correct);
             }
+
+            // 其他里线题目：始终可用
             return true;
         }
 
         _collapseInnerRoute() {
-            this.state.controlLock = true;
-            this.state.swipeMode = 'none';
-            return this._finish([
-                { type: 'hidden-route-collapsed' },
-                { type: 'schedule', delay: 1200, action: { type: 'RETURN_FROM_INNER', expectedNodeId: this.state.currentNodeId } }
-            ]);
+            // 旧的里线崩溃逻辑已删除
+            // 现在里线题目答错只是显示错误，不自动退出
+            return this._finish([{ type: 'answer-wrong' }]);
         }
 
         _advanceExpected(action) {
             if (this.state.currentNodeId !== action.expectedNodeId || this.state.status !== 'playing') return this._noop();
             this.state.controlLock = false;
             this.state.swipeMode = 'normal';
+
+            // 里线题目不自动跳转
+            if (this.state.route === 'inner') return this._noop();
+
+            // 表线题目自动跳转
             if (action.targetNodeId) return this._enterNode(action.targetNodeId);
             return this._goNext();
         }
 
         _unlockInnerFinal(action) {
-            if (this.state.currentNodeId !== action.expectedNodeId || this.state.currentNodeId !== 'inner-16') return this._noop();
-            this.state.controlLock = false;
-            this.state.swipeMode = 'left-only';
-            return this._finish([{ type: 'inner-left-only' }]);
+            // 旧的里线解锁逻辑已删除
+            return this._noop();
         }
 
         _returnFromInner(action) {
-            if (action.expectedNodeId && this.state.currentNodeId !== action.expectedNodeId) return this._noop();
-            this.state.controlLock = false;
-            this.state.swipeMode = 'normal';
-            this.state.flags.inner16AwaitingSwipe = false;
-            return this._enterNode('surface-21', [{ type: 'surface-restored' }]);
+            // 旧的里线退出逻辑已删除
+            // 现在里线退出是通过50题切换模式来实现的
+            return this._noop();
         }
 
         _goNext() {
-            if (this.state.status !== 'playing' || this.state.controlLock || this.state.route !== 'surface') return this._noop();
+            if (this.state.status !== 'playing' || this.state.controlLock) return this._noop();
+
+            // 里线导航
+            if (this.state.route === 'inner') {
+                return this._innerGoNext();
+            }
+
+            // 表线导航
+            if (this.state.route !== 'surface') return this._noop();
             const node = this.getCurrentNode();
             const record = this.state.answers[node.id];
             if (!record || !record.submitted || node.id === 'surface-50') return this._noop();
@@ -361,73 +360,101 @@
             return next ? this._enterNode(next) : this._noop();
         }
 
+        _innerGoNext() {
+            const currentNodeId = this.state.currentNodeId;
+            const innerOrder = data.innerOrder;
+
+            // 找到当前节点在里线顺序中的位置
+            const currentIndex = innerOrder.indexOf(currentNodeId);
+            if (currentIndex < 0) return this._noop();
+
+            // 如果是里线49，下一题是表线50
+            if (currentNodeId === 'inner-49') {
+                return this._enterNode('surface-50', [{ type: 'inner-to-surface' }]);
+            }
+
+            // 向后查找已解锁的里线题目
+            for (let i = currentIndex + 1; i < innerOrder.length; i++) {
+                const nodeId = innerOrder[i];
+                if (this._isInnerNodeUnlocked(nodeId)) {
+                    return this._enterNode(nodeId, [{ type: 'navigated-forward' }]);
+                }
+            }
+
+            return this._noop();
+        }
+
         _goPrevious() {
-            if (this.state.status !== 'playing' || this.state.controlLock || this.state.route !== 'surface' || this.state.flags.q50Submitted) return this._noop();
+            if (this.state.status !== 'playing' || this.state.controlLock || this.state.flags.q50Submitted) return this._noop();
+
+            // 里线导航
+            if (this.state.route === 'inner') {
+                return this._innerGoPrevious();
+            }
+
+            // 表线导航
+            if (this.state.route !== 'surface') return this._noop();
             const index = data.surfaceOrder.indexOf(this.state.currentNodeId);
             if (index <= 0) return this._noop();
             return this._enterNode(data.surfaceOrder[index - 1], [{ type: 'navigated-back' }]);
         }
 
+        _innerGoPrevious() {
+            const currentNodeId = this.state.currentNodeId;
+            const innerOrder = data.innerOrder;
+
+            // 找到当前节点在里线顺序中的位置
+            const currentIndex = innerOrder.indexOf(currentNodeId);
+            if (currentIndex <= 0) return this._noop();
+
+            // 向前查找已解锁的里线题目
+            for (let i = currentIndex - 1; i >= 0; i--) {
+                const nodeId = innerOrder[i];
+                if (this._isInnerNodeUnlocked(nodeId)) {
+                    return this._enterNode(nodeId, [{ type: 'navigated-back' }]);
+                }
+            }
+
+            return this._noop();
+        }
+
+        _isInnerNodeUnlocked(nodeId) {
+            // 检查里线题目是否已解锁
+            // 1. 题目存在
+            if (!data.nodes[nodeId]) return false;
+
+            // 2. 检查解锁条件
+            return this._innerGuardPassed(nodeId);
+        }
+
         _swipeLeft() {
             if (this.state.status !== 'playing' || this.state.controlLock) return this._noop();
-            if (this.state.swipeMode === 'left-only' && this.state.currentNodeId === 'inner-16') {
-                this.state.swipeMode = 'normal';
-                this.state.flags.inner16AwaitingSwipe = false;
-                return this._enterNode('inner-15', [{ type: 'entered-inner-final' }]);
-            }
             if (this.state.swipeMode !== 'normal') return this._noop();
             return this._goNext();
         }
 
         _swipeRight() {
             if (this.state.status !== 'playing' || this.state.controlLock || this.state.swipeMode !== 'normal') return this._noop();
-            if (this.state.currentNodeId === 'surface-21' && !this.state.flags.hiddenRouteComplete && this._canEnterInner()) {
-                return this._enterNode('inner-20', [{ type: 'hidden-route-entered' }]);
-            }
             return this._goPrevious();
-        }
-
-        _canEnterInner() {
-            const correct = (id) => this.state.answers[id] && this.state.answers[id].isCorrect === true;
-            return this.state.nightMode && correct('surface-0') && correct('surface-15');
         }
 
         _triggerRewind() {
             if (this.state.currentNodeId !== 'surface-50' || !this.state.flags.q50Submitted) return this._noop();
             if (!this.state.nightMode) return this._finish([{ type: 'night-prompt', promptKey: 'rewind', forced: true }]);
-            this.state.status = 'rewind_started';
-            this.state.flags.rewindStarted = true;
-            this.state.controlLock = true;
-            return this._finish([{ type: 'rewind-started' }]);
+
+            // 夜间模式下点击"回到过去"，解锁里线
+            this.state.flags.innerRouteUnlocked = true;
+            return this._finish([{ type: 'inner-route-unlocked' }]);
         }
 
         _retryHidden() {
-            Object.keys(this.state.answers).filter((id) => id.startsWith('inner-')).forEach((id) => delete this.state.answers[id]);
-            this.state.status = 'playing';
-            this.state.route = 'inner';
-            this.state.currentNodeId = 'inner-20';
-            this.state.controlLock = false;
-            this.state.swipeMode = 'normal';
-            this.state.flags.inner16AwaitingSwipe = false;
-            this.state.flags.hiddenRouteComplete = false;
-            return this._enterNode('inner-20', [{ type: 'hidden-route-retried' }]);
+            // 旧的里线重试逻辑已删除
+            return this._noop();
         }
 
         _debugPrepareHidden() {
-            this.state = createInitialState(this.state.settings);
-            this.state.status = 'playing';
-            this.state.nightMode = true;
-            this.state.nightPromptsSeen = { 'surface-0': true, 'surface-21': true };
-            for (let index = 0; index <= 15; index += 1) {
-                const node = data.nodes[`surface-${index}`];
-                const useWrong = [13, 14].includes(index);
-                const selected = useWrong
-                    ? [node.options.find((option) => option.charAt(0) !== node.answer[0]).charAt(0)]
-                    : [...node.answer];
-                this.state.answers[node.id] = { selected, submitted: true, isCorrect: !useWrong };
-                if (!useWrong) this.state.score += 1;
-            }
-            return this._enterNode('surface-21', [{ type: 'debug-jump' }]);
+            // 旧的里线调试逻辑已删除
+            return this._noop();
         }
 
         _debugJump(question) {
@@ -461,6 +488,7 @@
                 }
             }
             if (node.nightPrompt && !this.state.nightMode) {
+                // 只要当前是日间模式就显示提示，不管之前是否看过
                 effects.push({ type: 'night-prompt', promptKey: nodeId });
             }
             return this._finish(effects);
