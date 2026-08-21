@@ -460,7 +460,7 @@
                     effects.push({ type: 'blood-pulse' });
                 }
             }
-            if (node.nightPrompt && !this.state.nightPromptsSeen[nodeId]) {
+            if (node.nightPrompt && !this.state.nightMode) {
                 effects.push({ type: 'night-prompt', promptKey: nodeId });
             }
             return this._finish(effects);
@@ -475,7 +475,7 @@
                     delay: Math.max(0, this.state.pendingAction.dueAt - Date.now()),
                     action: this.state.pendingAction.action
                 });
-            } else if (this.state.status === 'playing' && node.nightPrompt && !this.state.nightPromptsSeen[node.id]) {
+            } else if (this.state.status === 'playing' && node.nightPrompt && !this.state.nightMode) {
                 effects.push({ type: 'night-prompt', promptKey: node.id });
             }
             return this._finish(effects);
