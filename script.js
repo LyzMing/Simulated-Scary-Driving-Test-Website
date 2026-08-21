@@ -104,7 +104,7 @@
     function renderQuestion(state) {
         const node = data.nodes[state.currentNodeId];
         const record = state.answers[node.id];
-        elements.currentQuestion.textContent = String(node.displayNumber + 1);
+        elements.currentQuestion.textContent = String(node.displayNumber);
         elements.totalQuestions.textContent = String(data.totalDisplayQuestions);
         elements.modeIndicator.textContent = state.nightMode ? '夜间' : '日间';
         elements.modeIndicator.classList.toggle('night', state.nightMode);
@@ -259,7 +259,7 @@
         if (availableSave) {
             const node = data.nodes[availableSave.currentNodeId];
             elements.saveSummary.textContent = node
-                ? `上次进度：第${node.displayNumber + 1}题 · ${availableSave.nightMode ? '夜间模式' : '日间模式'}`
+                ? `上次进度：第${node.displayNumber}题 · ${availableSave.nightMode ? '夜间模式' : '日间模式'}`
                 : '检测到可继续的考试记录';
             elements.startBtn.textContent = '重新开始';
         } else {
