@@ -29,6 +29,7 @@
                 innerRouteUnlocked: false,
                 q49RevealCount: 0,
                 q50Submitted: false,
+                q50RewindClicked: false,
                 rewindStarted: false
             },
             visited: {},
@@ -109,13 +110,16 @@
                     this.state.nightMode = Boolean(action.enabled);
                     if (action.promptKey) this.state.nightPromptsSeen[action.promptKey] = true;
 
-                    // 日间模式时关闭里线
+                    // 日间模式时关闭里线（但保留unlock状态）
                     if (!action.enabled) {
-                        this.state.flags.innerRouteUnlocked = false;
                         if (this.state.route === 'inner') {
-                            // 如果在里线中，返回表线50题
                             return this._enterNode('surface-50', [{ type: 'inner-route-closed', night: false }]);
                         }
+                    }
+
+                    // 夜间模式时：如果在50题且里线已解锁，恢复里线访问
+                    if (action.enabled && this.state.currentNodeId === 'surface-50' && this.state.flags.innerRouteUnlocked) {
+                        return this._enterNode('inner-49', [{ type: 'inner-route-restored' }]);
                     }
 
                     return this._finish([{ type: 'mode-changed', night: this.state.nightMode }]);
@@ -242,6 +246,12 @@
             record.isCorrect = this._evaluate(node, record.selected);
             this.state.answers[node.id] = record;
 
+            // q50特殊处理
+            if (node.id === 'surface-50') {
+                this.state.flags.q50Submitted = true;
+                return this._finish([{ type: 'q50-submitted' }, { type: 'answer-wrong' }]);
+            }
+
             // 里线题目调用 _handleInnerAnswer
             if (node.route === 'inner') {
                 return this._handleInnerAnswer(node, record);
@@ -249,7 +259,28 @@
 
             if (record.isCorrect) {
                 this.state.score += 1;
-                return this._finish([{ type: 'answer-correct' }]);
+                if (node.behavior === 'sacrifice') {
+                    record.resultLabel = '放弃';
+                    this.state.controlLock = true;
+                    this.state.swipeMode = 'none';
+                    return this._finish([
+                        { type: 'sacrifice' },
+                        { type: 'schedule', delay: 1300, action: { type: 'ADVANCE_EXPECTED', expectedNodeId: node.id } }
+                    ]);
+                }
+                if (node.behavior === 'forced') {
+                    return this._finish([
+                        { type: 'forced-choice' },
+                        { type: 'schedule', delay: 900, action: { type: 'ADVANCE_EXPECTED', expectedNodeId: node.id } }
+                    ]);
+                }
+                if (node.behavior === 'always') {
+                    record.isCorrect = null;
+                    return this._finish([{ type: 'blood-pulse' }]);
+                }
+                const effects = [{ type: 'answer-correct' }];
+                if (node.autoAdvance) effects.push({ type: 'schedule', delay: 1000, action: { type: 'ADVANCE_EXPECTED', expectedNodeId: node.id } });
+                return this._finish(effects);
             }
             return this._finish([{ type: 'answer-wrong' }]);
         }
@@ -262,7 +293,7 @@
             record.submitted = true;
             record.isCorrect = false;
             this.state.flags.q50Submitted = true;
-            return this._finish([{ type: 'q50-submitted' }, { type: 'answer-wrong' }]);
+            return this._finish([{ type: 'q50-submitted' }]);
         }
 
         _evaluate(node, selected) {
@@ -361,31 +392,24 @@
         }
 
         _innerGoNext() {
+            // 下一题 = 大序号（已经答过的题），inner-49的下一题回表线50
             const currentNodeId = this.state.currentNodeId;
-            const innerOrder = data.innerOrder;
-
-            // 找到当前节点在里线顺序中的位置
-            const currentIndex = innerOrder.indexOf(currentNodeId);
-            if (currentIndex < 0) return this._noop();
-
-            // 如果是里线49，下一题是表线50
             if (currentNodeId === 'inner-49') {
                 return this._enterNode('surface-50', [{ type: 'inner-to-surface' }]);
             }
-
-            // 向后查找已解锁的里线题目
-            for (let i = currentIndex + 1; i < innerOrder.length; i++) {
-                const nodeId = innerOrder[i];
-                if (this._isInnerNodeUnlocked(nodeId)) {
-                    return this._enterNode(nodeId, [{ type: 'navigated-forward' }]);
-                }
+            const innerOrder = data.innerOrder;
+            const currentIndex = innerOrder.indexOf(currentNodeId);
+            if (currentIndex < 0) return this._noop();
+            // index-1 = 大序号 = 下一题
+            const nextNodeId = innerOrder[currentIndex - 1];
+            if (nextNodeId && data.nodes[nextNodeId]) {
+                return this._enterNode(nextNodeId, [{ type: 'navigated-forward' }]);
             }
-
             return this._noop();
         }
 
         _goPrevious() {
-            if (this.state.status !== 'playing' || this.state.controlLock || this.state.flags.q50Submitted) return this._noop();
+            if (this.state.status !== 'playing' || this.state.controlLock) return this._noop();
 
             // 里线导航
             if (this.state.route === 'inner') {
@@ -394,27 +418,30 @@
 
             // 表线导航
             if (this.state.route !== 'surface') return this._noop();
+
+            // 50题夜间模式+里线已解锁：上一题直接进里线49
+            if (this.state.currentNodeId === 'surface-50' && this.state.nightMode && this.state.flags.innerRouteUnlocked) {
+                return this._enterNode('inner-49', [{ type: 'navigated-back' }]);
+            }
+
             const index = data.surfaceOrder.indexOf(this.state.currentNodeId);
             if (index <= 0) return this._noop();
             return this._enterNode(data.surfaceOrder[index - 1], [{ type: 'navigated-back' }]);
         }
 
         _innerGoPrevious() {
+            // 上一题 = 小序号（49→48→47→...→16）
             const currentNodeId = this.state.currentNodeId;
             const innerOrder = data.innerOrder;
-
-            // 找到当前节点在里线顺序中的位置
             const currentIndex = innerOrder.indexOf(currentNodeId);
-            if (currentIndex <= 0) return this._noop();
+            if (currentIndex < 0) return this._noop();
 
-            // 向前查找已解锁的里线题目
-            for (let i = currentIndex - 1; i >= 0; i--) {
-                const nodeId = innerOrder[i];
-                if (this._isInnerNodeUnlocked(nodeId)) {
-                    return this._enterNode(nodeId, [{ type: 'navigated-back' }]);
+            // 向后找（index大 = 序号小）
+            for (let i = currentIndex + 1; i < innerOrder.length; i++) {
+                if (this._isInnerNodeUnlocked(innerOrder[i])) {
+                    return this._enterNode(innerOrder[i], [{ type: 'navigated-back' }]);
                 }
             }
-
             return this._noop();
         }
 
@@ -423,7 +450,18 @@
             // 1. 题目存在
             if (!data.nodes[nodeId]) return false;
 
-            // 2. 检查解锁条件
+            // 2. inner-49 始终可用（里线入口）
+            if (nodeId === 'inner-49') return true;
+
+            // 3. 必须答完前一道（大序号）才能解锁
+            const innerOrder = data.innerOrder;
+            const index = innerOrder.indexOf(nodeId);
+            if (index < 0) return false;
+            const prevNodeId = innerOrder[index - 1]; // index-1 = 大序号
+            const prevRecord = this.state.answers[prevNodeId];
+            if (!prevRecord || !prevRecord.submitted) return false;
+
+            // 4. 检查额外解锁条件
             return this._innerGuardPassed(nodeId);
         }
 
@@ -440,10 +478,11 @@
 
         _triggerRewind() {
             if (this.state.currentNodeId !== 'surface-50' || !this.state.flags.q50Submitted) return this._noop();
-            if (!this.state.nightMode) return this._finish([{ type: 'night-prompt', promptKey: 'rewind', forced: true }]);
+            if (!this.state.nightMode) return this._noop();
 
             // 夜间模式下点击"回到过去"，解锁里线
             this.state.flags.innerRouteUnlocked = true;
+            this.state.flags.q50RewindClicked = true;
             return this._finish([{ type: 'inner-route-unlocked' }]);
         }
 

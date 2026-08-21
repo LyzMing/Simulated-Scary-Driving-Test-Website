@@ -66,6 +66,8 @@
                 showNightModal(effect.promptKey, effect.forced);
             } else if (effect.type === 'confirm-q50') {
                 showQ50Confirmation();
+            } else if (effect.type === 'inner-route-unlocked') {
+                showInnerRouteUnlockedMessage();
             }
         });
     });
@@ -139,8 +141,8 @@
     function renderQuestionText(node, state) {
         elements.questionText.replaceChildren();
 
-        // 50题处显示"回到过去"按钮
-        if (node.id === 'surface-50' && state.flags.q50Submitted) {
+        // 50题：已提交且夜间模式时显示"回到过去"按钮
+        if (node.id === 'surface-50' && state.flags.q50Submitted && state.nightMode && !state.flags.q50RewindClicked) {
             elements.questionText.append('你看到了全家福，真想');
             const rewindButton = document.createElement('button');
             rewindButton.type = 'button';
@@ -281,56 +283,50 @@
         // 上一题按钮：里线和表线都显示
         elements.prevBtn.hidden = false;
         if (node.route === 'inner') {
-            // 里线：检查是否有上一题（跳过未解锁的题目）
+            // 里线上一题 = 小序号（index更大）
             const innerOrder = data.innerOrder;
             const currentIndex = innerOrder.indexOf(node.id);
             let hasPrev = false;
-            for (let i = currentIndex - 1; i >= 0; i--) {
-                const prevNodeId = innerOrder[i];
-                if (engine.getState().answers[prevNodeId] && engine.getState().answers[prevNodeId].submitted) {
+            for (let i = currentIndex + 1; i < innerOrder.length; i++) {
+                if (engine._isInnerNodeUnlocked(innerOrder[i])) {
                     hasPrev = true;
                     break;
                 }
             }
             elements.prevBtn.disabled = !hasPrev || state.controlLock;
+        } else if (node.id === 'surface-50') {
+            // 50题：已提交后可以回退
+            elements.prevBtn.disabled = !state.flags.q50Submitted || state.controlLock;
         } else {
             // 表线
             const surfaceIndex = data.surfaceOrder.indexOf(node.id);
-            elements.prevBtn.disabled = surfaceIndex <= 0 || state.controlLock || state.flags.q50Submitted;
+            elements.prevBtn.disabled = surfaceIndex <= 0 || state.controlLock;
         }
 
-        // 确认答案按钮：表线41-50的多选题和里线的多选题
-        const canSubmitMulti = ['multi', 'delayed'].includes(node.type) && record && record.selected.length > 0 && !record.submitted;
-        const canSubmitQ50 = node.behavior === 'forced-submit' && record && record.selected.length > 0 && !record.submitted;
-        elements.submitBtn.hidden = !(canSubmitMulti || canSubmitQ50);
-        elements.submitBtn.disabled = state.controlLock;
-        elements.submitBtn.textContent = canSubmitQ50 ? '提交答卷' : '提交答案';
+        // 确认答案按钮
+        if (node.id === 'surface-50') {
+            // 50题：未提交时显示提交按钮
+            elements.submitBtn.hidden = state.flags.q50Submitted;
+            elements.submitBtn.disabled = state.controlLock;
+            elements.submitBtn.textContent = '提交答卷';
+        } else {
+            // 其他多选题
+            const canSubmitMulti = ['multi', 'delayed'].includes(node.type) && record && record.selected.length > 0 && !record.submitted;
+            elements.submitBtn.hidden = !canSubmitMulti;
+            elements.submitBtn.disabled = state.controlLock;
+            elements.submitBtn.textContent = '提交答案';
+        }
 
         // 下一题按钮
         let showNext = false;
         let disableNext = false;
-        if (record && record.submitted) {
+        if (node.route === 'inner') {
+            // 里线：下一题=大序号（已答过的题），inner-49下一题回表线50
+            showNext = true;
+            disableNext = false;
+        } else if (record && record.submitted) {
             if (node.route === 'surface' && node.id !== 'surface-50') {
                 showNext = true;
-            } else if (node.route === 'inner') {
-                // 里线：答完当前题后显示下一题按钮
-                showNext = true;
-                // 检查是否有下一题
-                const innerOrder = data.innerOrder;
-                const currentIndex = innerOrder.indexOf(node.id);
-                let hasNext = false;
-                for (let i = currentIndex + 1; i < innerOrder.length; i++) {
-                    const nextNodeId = innerOrder[i];
-                    if (engine.getState().answers[nextNodeId] && engine.getState().answers[nextNodeId].submitted) {
-                        hasNext = true;
-                        break;
-                    }
-                }
-                // 里线49的下一题是表线50
-                if (node.id === 'inner-49') {
-                    hasNext = true;
-                }
-                disableNext = !hasNext;
             }
         }
         elements.nextBtn.hidden = !showNext;
@@ -377,10 +373,30 @@
             title: '答题结束',
             message: '是否交卷？',
             closable: false,
+            buttons: [
+                {
+                    label: '结束答题',
+                    className: 'primary-btn danger-btn',
+                    onClick: () => engine.dispatch({ type: 'RESET_IDLE' })
+                },
+                {
+                    label: '返回',
+                    className: 'secondary-btn',
+                    onClick: () => engine.dispatch({ type: 'CONFIRM_Q50' })
+                }
+            ]
+        });
+    }
+
+    function showInnerRouteUnlockedMessage() {
+        showModal({
+            title: '🌙',
+            message: '成功进入里线！',
+            closable: true,
             buttons: [{
-                label: '是',
-                className: 'primary-btn danger-btn',
-                onClick: () => engine.dispatch({ type: 'CONFIRM_Q50' })
+                label: '确定',
+                className: 'primary-btn',
+                onClick: () => {}
             }]
         });
     }
