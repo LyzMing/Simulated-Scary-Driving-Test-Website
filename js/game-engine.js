@@ -29,8 +29,7 @@
                 innerRouteUnlocked: false,
                 q49RevealCount: 0,
                 q50Submitted: false,
-                q50RewindClicked: false,
-                rewindStarted: false
+                q50RewindClicked: false
             },
             visited: {},
             effectsLog: [],
@@ -90,8 +89,8 @@
                 this.state.pendingAction = null;
             }
 
-            const alwaysAllowed = new Set(['RESTORE', 'START_NEW', 'RESET_IDLE', 'TOGGLE_MUTE', 'TOGGLE_MOTION', 'RETRY_HIDDEN', 'DEBUG_PREPARE_HIDDEN', 'DEBUG_JUMP']);
-            if (this.state.controlLock && !alwaysAllowed.has(action.type) && !['UNLOCK_INNER_FINAL', 'ADVANCE_EXPECTED', 'RETURN_FROM_INNER'].includes(action.type)) {
+            const alwaysAllowed = new Set(['RESTORE', 'START_NEW', 'RESET_IDLE', 'TOGGLE_MUTE', 'TOGGLE_MOTION', 'DEBUG_JUMP']);
+            if (this.state.controlLock && !alwaysAllowed.has(action.type) && action.type !== 'ADVANCE_EXPECTED') {
                 return { state: this.state, effects: [] };
             }
 
@@ -145,16 +144,8 @@
                     return this._swipeRight();
                 case 'ADVANCE_EXPECTED':
                     return this._advanceExpected(action);
-                case 'UNLOCK_INNER_FINAL':
-                    return this._unlockInnerFinal(action);
-                case 'RETURN_FROM_INNER':
-                    return this._returnFromInner(action);
                 case 'TRIGGER_REWIND':
                     return this._triggerRewind();
-                case 'RETRY_HIDDEN':
-                    return this._retryHidden();
-                case 'DEBUG_PREPARE_HIDDEN':
-                    return this._debugPrepareHidden();
                 case 'DEBUG_JUMP':
                     return this._debugJump(action.question);
                 default:
@@ -343,12 +334,6 @@
             return true;
         }
 
-        _collapseInnerRoute() {
-            // 旧的里线崩溃逻辑已删除
-            // 现在里线题目答错只是显示错误，不自动退出
-            return this._finish([{ type: 'answer-wrong' }]);
-        }
-
         _advanceExpected(action) {
             if (this.state.currentNodeId !== action.expectedNodeId || this.state.status !== 'playing') return this._noop();
             this.state.controlLock = false;
@@ -360,17 +345,6 @@
             // 表线题目自动跳转
             if (action.targetNodeId) return this._enterNode(action.targetNodeId);
             return this._goNext();
-        }
-
-        _unlockInnerFinal(action) {
-            // 旧的里线解锁逻辑已删除
-            return this._noop();
-        }
-
-        _returnFromInner(action) {
-            // 旧的里线退出逻辑已删除
-            // 现在里线退出是通过50题切换模式来实现的
-            return this._noop();
         }
 
         _goNext() {
@@ -484,16 +458,6 @@
             this.state.flags.innerRouteUnlocked = true;
             this.state.flags.q50RewindClicked = true;
             return this._finish([{ type: 'inner-route-unlocked' }]);
-        }
-
-        _retryHidden() {
-            // 旧的里线重试逻辑已删除
-            return this._noop();
-        }
-
-        _debugPrepareHidden() {
-            // 旧的里线调试逻辑已删除
-            return this._noop();
         }
 
         _debugJump(question) {

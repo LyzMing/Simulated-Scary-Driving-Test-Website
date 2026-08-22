@@ -9,9 +9,7 @@
     const elements = {
         pages: {
             start: document.getElementById('start-page'),
-            quiz: document.getElementById('quiz-page'),
-            be: document.getElementById('be-page'),
-            rewind: document.getElementById('rewind-page')
+            quiz: document.getElementById('quiz-page')
         },
         body: document.body,
         toolbar: document.getElementById('game-toolbar'),
@@ -35,9 +33,6 @@
         prevBtn: document.getElementById('prev-btn'),
         submitBtn: document.getElementById('submit-btn'),
         nextBtn: document.getElementById('next-btn'),
-        retryHiddenBtn: document.getElementById('retry-hidden-btn'),
-        beRestartBtn: document.getElementById('be-restart-btn'),
-        rewindRestartBtn: document.getElementById('rewind-restart-btn'),
         modal: document.getElementById('modal'),
         modalTitle: document.getElementById('modal-title'),
         modalMessage: document.getElementById('modal-message'),
@@ -102,15 +97,6 @@
         }
 
         elements.toolbar.classList.add('visible');
-        if (state.status === 'be') {
-            showPage('be');
-            return;
-        }
-        if (state.status === 'rewind_started') {
-            showPage('rewind');
-            return;
-        }
-
         showPage('quiz');
         renderQuestion(state);
     }
@@ -466,9 +452,6 @@
     elements.muteBtn.addEventListener('click', () => engine.dispatch({ type: 'TOGGLE_MUTE' }));
     elements.motionBtn.addEventListener('click', () => engine.dispatch({ type: 'TOGGLE_MOTION' }));
     elements.toolbarRestartBtn.addEventListener('click', () => showRestartConfirmation(clearAndStart));
-    elements.beRestartBtn.addEventListener('click', () => showRestartConfirmation(clearAndStart));
-    elements.rewindRestartBtn.addEventListener('click', () => showRestartConfirmation(clearAndStart));
-    elements.retryHiddenBtn.addEventListener('click', () => engine.dispatch({ type: 'RETRY_HIDDEN' }));
     elements.prevBtn.addEventListener('click', () => engine.dispatch({ type: 'PREVIOUS' }));
     elements.nextBtn.addEventListener('click', () => engine.dispatch({ type: 'NEXT' }));
     elements.submitBtn.addEventListener('click', () => engine.dispatch({ type: 'SUBMIT' }));
@@ -517,8 +500,7 @@
         elements.debugPanel.addEventListener('click', (event) => {
             const action = event.target.dataset.debugAction;
             if (!action) return;
-            if (action === 'hidden') engine.dispatch({ type: 'DEBUG_PREPARE_HIDDEN' });
-            else engine.dispatch({ type: 'DEBUG_JUMP', question: Number(action) });
+            engine.dispatch({ type: 'DEBUG_JUMP', question: Number(action) });
         });
     }
 
